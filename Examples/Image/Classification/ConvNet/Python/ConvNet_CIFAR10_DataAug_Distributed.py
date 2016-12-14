@@ -180,6 +180,10 @@ if __name__=='__main__':
     parser.add_argument('-datadir', help='only interested in changes to that file');
     parser.add_argument('-logdir', help='only interested in changes by that user');
     parser.add_argument('-outputdir',  help='go straight to provided changelist');
+    parser.add_argument('-e', '--epochs', help='total epochs', type=int, required=False, default='160')
+    parser.add_argument('-q', '--quantize_bit', help='quantized bit', type=int, required=False, default='32')
+    parser.add_argument('-a', '--distributed_after', help='number of samples to train with before running distributed', type=int, required=False, default='0')
+    parser.add_argument('-b', '--block_samples', type=int, help="number of samples per block for block momentum (BM) distributed learner (if 0 BM learner is not used)", required=False, default=0)
 
     args = vars(parser.parse_args())
 

@@ -7,25 +7,27 @@
 import numpy as np
 import os
 import sys
-from cntk.ops.tests.ops_test_utils import cntk_device
-from cntk.cntk_py import DeviceKind_GPU
-from cntk.device import set_default_device
-from cntk.io import FULL_DATA_SWEEP
-from cntk import distributed
 import pytest
 import subprocess
+from cifar_convnet_distributed_test import mpiexec_test
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(abs_path, "..", "..", "..", "..", "Examples", "Image", "Classification", "ResNet", "Python"))
+<<<<<<< HEAD
 from TrainResNet_CIFAR10_Distributed import resnet_cifar10
+=======
+script_under_test = os.path.join(abs_path, "..", "..", "..", "..", "Examples", "Image", "Classification", "ResNet", "Python", "TrainResNet_CIFAR10_Distributed.py")
+>>>>>>> Adding more distributed tests for python
 
-TOLERANCE_ABSOLUTE = 2E-1
+def test_cifar_convnet_distributed_mpiexec(device_id):
+    params = [ "-e", "2"] # run only 2 epochs
+    mpiexec_test(device_id, train_and_test_script, params, 0.5946, False, True)
 
-def test_cifar_resnet_distributed_error(device_id, is_1bit_sgd):
-    if cntk_device(device_id).type() != DeviceKind_GPU:
-        pytest.skip('test only runs on GPU')
-    set_default_device(cntk_device(device_id))
+def test_cifar_convnet_distributed_1bitsgd_mpiexec(device_id):
+    params = ["-q", "1", "-e", "2"] # 2 epochs with 1BitSGD
+    mpiexec_test(device_id, train_and_test_script, params, 0.5946, False, True)
 
+<<<<<<< HEAD
     if not is_1bit_sgd:
         pytest.skip('test only runs in 1-bit SGD')
 
@@ -56,3 +58,8 @@ def test_cifar_resnet_distributed_error(device_id, is_1bit_sgd):
     assert np.allclose(test_error, expected_test_error,
                        atol=TOLERANCE_ABSOLUTE)
     distributed.Communicator.finalize()
+=======
+def test_cifar_convnet_distributed_blockmomentum_mpiexec(device_id):
+    params = ["-b", "32000", "-e", "2"] # 2 epochs with BlockMomentum SGD using blocksize 32000
+    mpiexec_test(device_id, train_and_test_script, params, 0.55, True, False)
+>>>>>>> Adding more distributed tests for python
