@@ -8,6 +8,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <boost/test/unit_test.hpp>
+
+namespace Microsoft { namespace MSR { namespace CNTK { namespace Test {
+
 #ifdef _MSC_VER
 // In case of asserts in debug mode, print the message into stderr and throw exception
 int HandleDebugAssert(int /* reportType */,
@@ -54,6 +58,11 @@ bool IsGPUAvailable()
     return isGPUDeviceAvailable;
 }
 
+boost::test_tools::assertion_result GpuAvailable(boost::unit_test::test_unit_id)
+{
+    return IsGPUAvailable();
+}
+
 bool Is1bitSGDAvailable()
 {
     static bool is1bitSGDAvailable;
@@ -77,3 +86,5 @@ bool Is1bitSGDAvailable()
 
     return is1bitSGDAvailable;
 }
+
+}}}}
