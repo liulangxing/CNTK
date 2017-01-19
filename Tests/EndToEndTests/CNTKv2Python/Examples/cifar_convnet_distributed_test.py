@@ -16,12 +16,38 @@ from cntk.cntk_py import DeviceKind_GPU
 from cntk.device import set_default_device
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(abs_path)
+example_dir = os.path.join(abs_path, "..", "..", "..", "..", "Examples", "Image", "Classification", "ConvNet", "Python")
+script_under_test = os.path.join(example_dir, "ConvNet_CIFAR10_DataAug_Distributed.py")
 
-script_under_test = os.path.join(abs_path, "..", "..", "..", "..", "Examples", "Image", "Classification", "ConvNet", "Python", "ConvNet_CIFAR10_DataAug_Distributed.py")
+sys.path.append(example_dir)
 
 TOLERANCE_ABSOLUTE = 2E-1
 TIMEOUT_SECONDS = 300
+
+def data_set_directory():
+    try:
+        base_path = os.path.join(os.environ['CNTK_EXTERNAL_TESTDATA_SOURCE_DIRECTORY'],
+                                *"Image/CIFAR/v0/cifar-10-batches-py".split("/"))
+        # N.B. CNTK_EXTERNAL_TESTDATA_SOURCE_DIRECTORY has {train,test}_map.txt
+        #      and CIFAR-10_mean.xml in the base_path.
+    except KeyError:
+        base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                *"../../../../Examples/Image/DataSets/CIFAR-10".split("/"))
+
+    base_path = os.path.normpath(base_path)
+    os.chdir(os.path.join(base_path, '..'))
+    return base_path
+
+    from _cntk_py import set_computation_network_trace_level, set_fixed_random_seed, force_deterministic_algorithms
+    set_computation_network_trace_level(1) 
+    set_fixed_random_seed(1)  # BUGBUG: has no effect at present  # TODO: remove debugging facilities once this all works
+    #force_deterministic_algorithms()
+    # TODO: do the above; they lead to slightly different results, so not doing it for now
+
+    train_data = os.path.join(base_path, 'train_map.txt')
+    mean_data = os.path.join(base_path, 'CIFAR-10_mean.xml')
+    test_data = os.path.join(base_path, 'test_map.txt')
+
 
 def mpiexec_test(device_id, script, params, expected_test_error, allow_tolerance, mb_should_match):
     if cntk_device(device_id).type() != DeviceKind_GPU:
@@ -52,14 +78,23 @@ def mpiexec_test(device_id, script, params, expected_test_error, allow_tolerance
                        atol=TOLERANCE_ABSOLUTE)
 
 def test_cifar_convnet_distributed_mpiexec(device_id):
-    params = [ "-e", "2"] # 2 epochs with simple aggregator
+    params = [ "-e", "2",
+               "-d", data_set_directory(),
+               "-q", "32",
+               "-device", "0" ]
     mpiexec_test(device_id, script_under_test, params, 0.617, False, True)
 
 def test_cifar_convnet_distributed_1bitsgd_mpiexec(device_id):
-    params = ["-q", "1", "-e", "2"] # 2 epochs with 1BitSGD
+    params = [ "-e", "2",
+               "-d", data_set_directory(),
+               "-q", "1",
+               "-device", "0" ]
     mpiexec_test(device_id, script_under_test, params, 0.617, False, True)
 
 
 def test_cifar_convnet_distributed_blockmomentum_mpiexec(device_id):
-    params = ["-b", "32000", "-e", "2"] # 2 epochs with block momentum
-    piexec_test(device_id, script_under_test, params, 0.6457, True, False)
+    params = [ "-e", "2",
+               "-d", data_set_directory(),
+               "-b", "3200",
+               "-device", "0" ]
+    mpiexec_test(device_id, script_under_test, params, 0.6457, True, False)
